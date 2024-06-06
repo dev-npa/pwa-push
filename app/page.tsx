@@ -9,7 +9,7 @@ export default function Page() {
   );
 
   useEffect(() => {
-    navigator.serviceWorker.register("service-worker.js");
+    navigator.serviceWorker.register("service-worker.js", { scope: "/" });
 
     navigator.serviceWorker.ready
       .then(function (registration) {

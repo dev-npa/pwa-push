@@ -1,6 +1,6 @@
 import webPush from "web-push";
 import { push } from "@/utils/push";
-import { subscriptions } from "../subscribe/route";
+import { subscriptions } from "@/db";
 
 export async function POST(request: Request) {
   try {
@@ -8,7 +8,9 @@ export async function POST(request: Request) {
     const { payload } = await request.json();
 
     await Promise.all(
-      subscriptions.map((s: any) => webPush.sendNotification(s, payload))
+      subscriptions
+        .find()
+        ?.map((s: any) => webPush.sendNotification(s, payload))
     );
 
     return new Response("Notified", { status: 200 });

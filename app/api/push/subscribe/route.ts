@@ -1,12 +1,11 @@
 import { push } from "@/utils/push";
 import { NextResponse } from "next/server";
-
-export const subscriptions: PushSubscription[] = [];
+import { subscriptions } from "@/db";
 
 export async function GET() {
   try {
     push();
-    return NextResponse.json({ subscriptions });
+    return NextResponse.json({ subscriptions: subscriptions.find() });
   } catch (err: any) {
     console.error(err);
     return new Response("Internal server error : Web Push is not available", {
@@ -25,9 +24,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!subscriptions.find((s) => s.endpoint === subscription.endpoint)) {
-      subscriptions.push(subscription);
-    }
+    subscriptions.add(subscription);
 
     return new Response("Subscribed", { status: 200 });
   } catch (err: any) {
