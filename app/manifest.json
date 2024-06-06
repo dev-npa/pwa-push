@@ -1,9 +1,10 @@
 {
   "name": "PWA Push",
   "short_name": "PWA Push",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#111111",
+  "theme_color": "#01014f",
+  "background_color": "#01014f",
   "description": "PWA Push",
   "icons": [
     {
