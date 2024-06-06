@@ -55,31 +55,35 @@ export default function Page() {
   };
 
   useEffect(() => {
-    navigator.serviceWorker.register("service-worker.js", { scope: "/" });
+    try {
+      navigator.serviceWorker.register("service-worker.js", { scope: "/" });
 
-    navigator.serviceWorker.ready
-      .then(function (registration) {
-        return registration.pushManager
-          .getSubscription()
-          .then(async function (subscription) {
-            if (subscription) {
-              return subscription;
-            }
+      navigator.serviceWorker.ready
+        .then(function (registration) {
+          return registration.pushManager
+            .getSubscription()
+            .then(async function (subscription) {
+              if (subscription) {
+                return subscription;
+              }
 
-            const vapidPublicKey = await rest
-              .get("/key")
-              .then(({ data }) => data);
-            const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+              const vapidPublicKey = await rest
+                .get("/key")
+                .then(({ data }) => data);
+              const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
 
-            return registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: convertedVapidKey,
+              return registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedVapidKey,
+              });
             });
-          });
-      })
-      .then(function (subscription) {
-        setSubscription(subscription);
-      });
+        })
+        .then(function (subscription) {
+          setSubscription(subscription);
+        });
+    } catch (err) {
+      setStatus("ERROR:" + JSON.stringify(err, null, 2));
+    }
   }, []);
 
   return (
