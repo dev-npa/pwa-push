@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { urlBase64ToUint8Array } from "@/utils";
 import { rest } from "@/services/rest";
 
@@ -10,7 +10,9 @@ export default function Page() {
   );
   const [status, setStatus] = useState("");
 
-  const fetchStatus = async () => {
+  const fetchStatus = async (subscription: PushSubscription | null) => {
+    if (!subscription) return null;
+
     return rest
       .post("/subscribe/status", { subscription })
       .then(({ data }) => Boolean(data.subscription));
@@ -34,7 +36,9 @@ export default function Page() {
       return;
     }
 
-    const subscribed = await fetchStatus();
+    const subscription = await getServiceWorkerSubscription();
+
+    const subscribed = await fetchStatus(subscription);
 
     if (subscribed) {
       setStatus("You are already subscribed");
@@ -50,40 +54,36 @@ export default function Page() {
     if (!subscription) {
       setStatus("Not subscribed");
     }
-    const subscribed = await fetchStatus();
+    const subscribed = await fetchStatus(subscription);
     setStatus(subscribed ? "You are already subscribed" : "Not subscribed");
   };
 
-  useEffect(() => {
-    try {
-      navigator.serviceWorker.register("service-worker.js", { scope: "/" });
+  const getServiceWorkerSubscription = useCallback(async () => {
+    const registration = await navigator.serviceWorker.ready;
 
-      navigator.serviceWorker.ready
-        .then(function (registration) {
-          return registration.pushManager
-            .getSubscription()
-            .then(async function (subscription) {
-              if (subscription) {
-                return subscription;
-              }
+    let subscription = await registration.pushManager.getSubscription();
 
-              const vapidPublicKey = await rest
-                .get("/key")
-                .then(({ data }) => data);
-              const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
-
-              return registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedVapidKey,
-              });
-            });
-        })
-        .then(function (subscription) {
-          setSubscription(subscription);
-        });
-    } catch (err) {
-      setStatus("ERROR:" + JSON.stringify(err, null, 2));
+    if (subscription) {
+      return subscription;
     }
+
+    const vapidPublicKey = await rest.get("/key").then(({ data }) => data);
+    const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: convertedVapidKey,
+    });
+
+    return subscription;
+  }, []);
+
+  useEffect(() => {
+    navigator.serviceWorker.register("service-worker.js", { scope: "/" });
+
+    getServiceWorkerSubscription().then((subscription) => {
+      setSubscription(subscription);
+    });
   }, []);
 
   return (
