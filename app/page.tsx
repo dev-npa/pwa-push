@@ -38,6 +38,13 @@ export default function Page() {
 
     const subscription = await getServiceWorkerSubscription();
 
+    if (subscription) {
+      setSubscription(subscription);
+    } else {
+      setStatus("Error getting service worker subscription");
+      return;
+    }
+
     const subscribed = await fetchStatus(subscription);
 
     if (subscribed) {
