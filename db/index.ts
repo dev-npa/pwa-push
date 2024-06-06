@@ -8,5 +8,13 @@ export const subscriptions = {
       db.subscriptions.push(subscription);
     }
   },
-  find: () => db.subscriptions,
+  find: () => {
+    return db.subscriptions;
+  },
+  clear: () => {
+    db.subscriptions = [];
+  },
+  get: (subscription: PushSubscription) => {
+    return db.subscriptions.find((s) => s.endpoint === subscription.endpoint);
+  },
 };
