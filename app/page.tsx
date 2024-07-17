@@ -9,6 +9,8 @@ export default function Page() {
     null
   );
   const [status, setStatus] = useState("");
+  const [batteryInformation, setBatteryInformation] = useState<any>(null);
+  const [dataInformation, setDataInformation] = useState<any>(null);
 
   const fetchStatus = async (subscription: PushSubscription | null) => {
     if (!subscription) return null;
@@ -85,12 +87,42 @@ export default function Page() {
     return subscription;
   }, []);
 
+  const getBatterySatus = useCallback(() => {
+    if ("getBattery" in navigator) {
+      (navigator as any)?.getBattery().then(function (battery: any) {
+        setBatteryInformation({
+          level: battery.level * 100 + "%",
+          charging: battery.charging,
+          lowpower: battery.level < 0.2 && !battery.charging,
+        });
+      });
+    } else {
+      setBatteryInformation({ message: "Battery Status API not supported" });
+    }
+  }, []);
+
+  const getDataStatus = useCallback(() => {
+    if ("connection" in navigator) {
+      const connection: any = navigator.connection;
+
+      setDataInformation({
+        "connection-type": connection.effectiveType,
+        "data-saver": connection.effectiveType === "2g" || connection.saveData,
+      });
+    } else {
+      setBatteryInformation({ message: "Data Status API not supported" });
+    }
+  }, []);
+
   useEffect(() => {
     navigator.serviceWorker.register("service-worker.js", { scope: "/" });
 
     getServiceWorkerSubscription().then((subscription) => {
       setSubscription(subscription);
     });
+
+    getBatterySatus();
+    getDataStatus();
   }, []);
 
   return (
@@ -106,10 +138,26 @@ export default function Page() {
       </div>
       {status && <p className="my-2 font-semibold text-yellow-800">{status}</p>}
       {subscription && (
-        <div className="mt-3">
-          <p className="mb-1">Subscription Details</p>
+        <div className="mt-3 p-2 rounded-lg bg-green-200 overflow-auto">
+          <p className="mb-1 font-medium">Subscription Details</p>
           <code>
-            <p>{JSON.stringify(subscription, null, 2)}</p>
+            <pre>{JSON.stringify(subscription, null, 2)}</pre>
+          </code>
+        </div>
+      )}
+      {batteryInformation && (
+        <div className="mt-3 p-2 rounded-lg bg-blue-200 overflow-auto">
+          <p className="mb-1 font-medium">Battery Information</p>
+          <code>
+            <p>{JSON.stringify(batteryInformation, null, 2)}</p>
+          </code>
+        </div>
+      )}
+      {dataInformation && (
+        <div className="mt-3 p-2 rounded-lg bg-yellow-100 overflow-auto">
+          <p className="mb-1 font-medium">Data Information</p>
+          <code>
+            <p>{JSON.stringify(dataInformation, null, 2)}</p>
           </code>
         </div>
       )}
