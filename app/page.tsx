@@ -106,11 +106,11 @@ export default function Page() {
       const connection: any = navigator.connection;
 
       setDataInformation({
-        "connection-type": connection.effectiveType,
-        "data-saver": connection.effectiveType === "2g" || connection.saveData,
+        "connection-type": connection?.effectiveType,
+        "data-saver": connection?.effectiveType === "2g" || connection?.saveData,
       });
     } else {
-      setBatteryInformation({ message: "Data Status API not supported" });
+      setDataInformation({ message: "Data Status API not supported" });
     }
   }, []);
 
